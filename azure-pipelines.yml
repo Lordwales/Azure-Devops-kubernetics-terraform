@@ -1,51 +1,120 @@
 trigger:
-- master
+- none
+
+stages:
+- stage: 
+  displayName: Provision Infrastructure
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      name: Default    # your job runs on an agent in this pool
+      demands: agent.os -equals Windows_NT 
 
 # pool:
 #   vmImage: ubuntu-latest'
-pool:
-  name: Default    # your job runs on an agent in this pool
-  demands: agent.os -equals Windows_NT    # the agent must have this capability to run the job
+# pool:
+#   name: Default    # your job runs on an agent in this pool
+#   demands: agent.os -equals Windows_NT    # the agent must have this capability to run the job
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+    steps:
+    - script: echo Hello, world!
+      displayName: 'Run a one-line script'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    - script: |
+        echo Add other tasks to build, test, and deploy your project.
+        echo See https://aka.ms/yaml
+      displayName: 'Run a multi-line script'
 
-- task: DownloadSecureFile@1
-  name: publickey
-  inputs:
-    secureFile: 'azure_kubernetes.pub'
+    - task: DownloadSecureFile@1
+      name: publickey
+      inputs:
+        secureFile: 'azure_kubernetes.pub'
 
-- task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
-  inputs:
-    terraformVersion: '0.12.3'
+    - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
+      inputs:
+        terraformVersion: '0.12.3'
 
-- task: TerraformCLI@0
-  inputs:
-    command: 'init'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
-    backendType: 'azurerm'
-    backendServiceArm: 'Azure-resource-manager-connection'
-    ensureBackend: true
-    backendAzureRmResourceGroupName: 'terraform-backend-rg'
-    backendAzureRmResourceGroupLocation: 'westeurope'
-    backendAzureRmStorageAccountName: 'lordwalesstorage'
-    backendAzureRmContainerName: 'lordwalesstoragecontainer'
-    backendAzureRmKey: 'kubernetes-dev.tfstate'
-    allowTelemetryCollection: true
+    - task: TerraformCLI@0
+      inputs:
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+        commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+        backendType: 'azurerm'
+        backendServiceArm: 'Azure-resource-manager-connection'
+        ensureBackend: true
+        backendAzureRmResourceGroupName: 'terraform-backend-rg'
+        backendAzureRmResourceGroupLocation: 'westeurope'
+        backendAzureRmStorageAccountName: 'lordwalesstorage'
+        backendAzureRmContainerName: 'lordwalesstoragecontainer'
+        backendAzureRmKey: 'kubernetes-dev.tfstate'
+        allowTelemetryCollection: true
 
-- task: TerraformCLI@0
-  inputs:
-    command: 'apply'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-    environmentServiceName: 'Azure-resource-manager-connection'
-    runAzLogin: true
-    commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
-    allowTelemetryCollection: true
+    - task: TerraformCLI@0
+      inputs:
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+        environmentServiceName: 'Azure-resource-manager-connection'
+        runAzLogin: true
+        commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+        allowTelemetryCollection: true
     
+
+- stage: Build
+  displayName: Build Docker Image
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      name: Default    # your job runs on an agent in this pool
+      demands: agent.os -equals Windows_NT 
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'lordwales-docker-hub'
+        repository: 'lordwales/currency-exchange-service'
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(System.DefaultWorkingDirectory)'
+        Contents: '**/*.yaml'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'manifests'
+        publishLocation: 'Container'
+
+- stage: Deploy
+  dependsOn: Build
+  displayName: Deploy Docker Image
+  jobs:
+  - job: Deploy
+    displayName: Deploy
+    pool:
+      name: Default    # your job runs on an agent in this pool
+      demands: agent.os -equals Windows_NT 
+    steps:
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        buildType: 'current'
+        artifactName: 'manifests'
+        itemPattern: '**/*.yaml'
+        targetPath: '$(System.ArtifactsDirectory)'
+
+    - task: KubernetesManifest@0
+      inputs:
+        action: 'deploy'
+        kubernetesServiceConnection: 'Azure-Kubernetes-Connection'
+        namespace: 'default'
+        manifests: '$(System.ArtifactsDirectory)/configuration/kubernetes/deployment.yaml'
+        containers: 'lordwales/currency-exchange-service:$(tag)'
+ #stage 1
+ #Build Docker Image
+ #Publish the k8s Files
+ 
+ #stage 2
+ #Download the k8s files
+ #Deploy to k8s cluster with Docker Image.   
