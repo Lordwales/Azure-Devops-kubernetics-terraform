@@ -21,6 +21,9 @@ steps:
   inputs:
     secureFile: 'azure_kubernetes.pub'
 
+- task: TerraformTool@0
+  inputs:
+    version: '0.11.8'
 
 - task: TerraformCLI@0
   inputs:
