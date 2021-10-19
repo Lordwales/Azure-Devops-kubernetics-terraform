@@ -1,0 +1,63 @@
+trigger:
+- master
+
+# strategy is used to run the job in diffrent agents. NOTE: the "jobs" 
+# tasks have to be disabled
+
+# strategy:
+#   matrix:
+#     linux:
+#       operatingSystem: 'ubuntu-latest'
+#     mac:
+#       operatingSystem: 'macos-latest'  
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: Build
+  jobs:
+  - job: Job1
+    steps:
+    - script: echo Hello, world!
+      displayName: 'Run a one-line script'
+
+    - script: |
+        echo Add other tasks to build, test, and deploy your project.
+        echo See https://aka.ms/yaml
+      displayName: 'Run a multi-line script'
+
+  - job: Job2
+    dependsOn: Job1
+    steps:
+    - script: echo Job2!
+      displayName: 'Run a one-line script'
+
+- stage: DevDeploy
+  jobs:
+  - job: Job1
+    steps:
+    - script: echo Hello, world!
+      displayName: 'Run a one-line script'
+
+    - script: |
+        echo Add other tasks to build, test, and deploy your project.
+        echo See https://aka.ms/yaml
+      displayName: 'Run a multi-line script'
+
+  - job: Job2
+    dependsOn: Job1
+    steps:
+    - script: echo Job2!
+      displayName: 'Run a one-line script'
+
+# you can also use "deployment" in place of "job" as seen below
+- stage: QADeploy
+  jobs:
+  - deployment: QADeployJob
+    environment: QA
+    strategy:
+     runOnce:
+       deploy:
+         steps:
+           - script: echo deploy to QA
