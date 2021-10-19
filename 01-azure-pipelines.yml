@@ -1,5 +1,5 @@
 trigger:
-- master
+- none
 
 # strategy is used to run the job in diffrent agents. NOTE: the "jobs" 
 # tasks have to be disabled
