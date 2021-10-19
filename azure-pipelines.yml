@@ -72,7 +72,7 @@ stages:
     - task: Docker@2
       inputs:
         containerRegistry: 'lordwales-docker-hub'
-        repository: 'currency-exchange-service'
+        repository: 'lordwales/currency-exchange-service'
         command: 'buildAndPush'
         Dockerfile: '**/Dockerfile'
     - task: CopyFiles@2
@@ -110,7 +110,7 @@ stages:
         kubernetesServiceConnection: 'Azure-Kubernetes-Connection'
         namespace: 'default'
         manifests: '$(System.ArtifactsDirectory)/configuration/kubernetes/deployment.yaml'
-        containers: 'currency-exchange-service:$(tag)'
+        containers: 'lordwales/currency-exchange-service:$(tag)'
  #stage 1
  #Build Docker Image
  #Publish the k8s Files
