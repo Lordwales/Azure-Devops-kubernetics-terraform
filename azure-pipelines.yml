@@ -59,61 +59,67 @@ stages:
         runAzLogin: true
         commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
         allowTelemetryCollection: true
+
+    - task: TerraformCLI@0
+      inputs:
+        command: 'destroy'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+        environmentServiceName: 'Azure-resource-manager-connection'   
     
 
-- stage: Build
-  displayName: Build Docker Image
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: ubuntu-latest
-      # name: Default    # your job runs on an agent in this pool
-      # demands: agent.os -equals Windows_NT 
-    steps:
-    - task: Docker@2
-      inputs:
-        containerRegistry: 'lordwales-docker-hub'
-        repository: 'lordwales/currency-exchange-service'
-        command: 'buildAndPush'
-        Dockerfile: '**/Dockerfile'
-    - task: CopyFiles@2
-      inputs:
-        SourceFolder: '$(System.DefaultWorkingDirectory)'
-        Contents: '**/*.yaml'
-        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+# - stage: Build
+#   displayName: Build Docker Image
+#   jobs:
+#   - job: Build
+#     displayName: Build
+#     pool:
+#       vmImage: ubuntu-latest
+#       # name: Default    # your job runs on an agent in this pool
+#       # demands: agent.os -equals Windows_NT 
+#     steps:
+#     - task: Docker@2
+#       inputs:
+#         containerRegistry: 'lordwales-docker-hub'
+#         repository: 'lordwales/currency-exchange-service'
+#         command: 'buildAndPush'
+#         Dockerfile: '**/Dockerfile'
+#     - task: CopyFiles@2
+#       inputs:
+#         SourceFolder: '$(System.DefaultWorkingDirectory)'
+#         Contents: '**/*.yaml'
+#         TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
-    - task: PublishBuildArtifacts@1
-      inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-        ArtifactName: 'manifests'
-        publishLocation: 'Container'
+#     - task: PublishBuildArtifacts@1
+#       inputs:
+#         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+#         ArtifactName: 'manifests'
+#         publishLocation: 'Container'
 
-- stage: Deploy
-  dependsOn: Build
-  displayName: Deploy Docker Image
-  jobs:
-  - job: Deploy
-    displayName: Deploy
-    pool:
-      vmImage: ubuntu-latest
-      # name: Default    # your job runs on an agent in this pool
-      # demands: agent.os -equals Windows_NT 
-    steps:
-    - task: DownloadPipelineArtifact@2
-      inputs:
-        buildType: 'current'
-        artifactName: 'manifests'
-        itemPattern: '**/*.yaml'
-        targetPath: '$(System.ArtifactsDirectory)'
+# - stage: Deploy
+#   dependsOn: Build
+#   displayName: Deploy Docker Image
+#   jobs:
+#   - job: Deploy
+#     displayName: Deploy
+#     pool:
+#       vmImage: ubuntu-latest
+#       # name: Default    # your job runs on an agent in this pool
+#       # demands: agent.os -equals Windows_NT 
+#     steps:
+#     - task: DownloadPipelineArtifact@2
+#       inputs:
+#         buildType: 'current'
+#         artifactName: 'manifests'
+#         itemPattern: '**/*.yaml'
+#         targetPath: '$(System.ArtifactsDirectory)'
 
-    - task: KubernetesManifest@0
-      inputs:
-        action: 'deploy'
-        kubernetesServiceConnection: 'Azure-Kubernetes-Connection'
-        namespace: 'default'
-        manifests: '$(System.ArtifactsDirectory)/configuration/kubernetes/deployment.yaml'
-        containers: 'lordwales/currency-exchange-service:$(tag)'
+#     - task: KubernetesManifest@0
+#       inputs:
+#         action: 'deploy'
+#         kubernetesServiceConnection: 'Azure-Kubernetes-Connection'
+#         namespace: 'default'
+#         manifests: '$(System.ArtifactsDirectory)/configuration/kubernetes/deployment.yaml'
+#         containers: 'lordwales/currency-exchange-service:$(tag)'
  #stage 1
  #Build Docker Image
  #Publish the k8s Files
