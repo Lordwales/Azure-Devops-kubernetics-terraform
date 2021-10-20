@@ -8,7 +8,7 @@ stages:
   - job: Build
     displayName: Build
     pool:
-      vmImage: ubuntu-latest'
+      vmImage: ubuntu-latest
       # name: Default    # your job runs on an agent in this pool
       # demands: agent.os -equals Windows_NT 
 
