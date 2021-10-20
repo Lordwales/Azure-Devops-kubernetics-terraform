@@ -64,7 +64,8 @@ stages:
       inputs:
         command: 'destroy'
         workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
-        environmentServiceName: 'Azure-resource-manager-connection'   
+        environmentServiceName: 'Azure-resource-manager-connection' 
+        commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'  
     
 
 # - stage: Build
