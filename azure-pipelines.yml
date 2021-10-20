@@ -8,8 +8,9 @@ stages:
   - job: Build
     displayName: Build
     pool:
-      name: Default    # your job runs on an agent in this pool
-      demands: agent.os -equals Windows_NT 
+      vmImage: ubuntu-latest'
+      # name: Default    # your job runs on an agent in this pool
+      # demands: agent.os -equals Windows_NT 
 
 # pool:
 #   vmImage: ubuntu-latest'
@@ -66,8 +67,9 @@ stages:
   - job: Build
     displayName: Build
     pool:
-      name: Default    # your job runs on an agent in this pool
-      demands: agent.os -equals Windows_NT 
+      vmImage: ubuntu-latest'
+      # name: Default    # your job runs on an agent in this pool
+      # demands: agent.os -equals Windows_NT 
     steps:
     - task: Docker@2
       inputs:
@@ -94,8 +96,9 @@ stages:
   - job: Deploy
     displayName: Deploy
     pool:
-      name: Default    # your job runs on an agent in this pool
-      demands: agent.os -equals Windows_NT 
+      vmImage: ubuntu-latest'
+      # name: Default    # your job runs on an agent in this pool
+      # demands: agent.os -equals Windows_NT 
     steps:
     - task: DownloadPipelineArtifact@2
       inputs:
