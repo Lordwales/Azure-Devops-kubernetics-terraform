@@ -8,8 +8,9 @@ stages:
   - job: Build
     displayName: Build
     pool:
-      name: Default    # your job runs on an agent in this pool
-      demands: agent.os -equals Windows_NT 
+      vmImage: ubuntu-latest
+      # name: Default    # your job runs on an agent in this pool
+      # demands: agent.os -equals Windows_NT 
 
 # pool:
 #   vmImage: ubuntu-latest'
@@ -58,6 +59,13 @@ stages:
         runAzLogin: true
         commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
         allowTelemetryCollection: true
+
+    # - task: TerraformCLI@0
+    #   inputs:
+    #     command: 'destroy'
+    #     workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+    #     environmentServiceName: 'Azure-resource-manager-connection' 
+    #     commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'  
     
 
 - stage: Build
@@ -66,8 +74,9 @@ stages:
   - job: Build
     displayName: Build
     pool:
-      name: Default    # your job runs on an agent in this pool
-      demands: agent.os -equals Windows_NT 
+      vmImage: ubuntu-latest
+      # name: Default    # your job runs on an agent in this pool
+      # demands: agent.os -equals Windows_NT 
     steps:
     - task: Docker@2
       inputs:
@@ -94,8 +103,9 @@ stages:
   - job: Deploy
     displayName: Deploy
     pool:
-      name: Default    # your job runs on an agent in this pool
-      demands: agent.os -equals Windows_NT 
+      vmImage: ubuntu-latest
+      # name: Default    # your job runs on an agent in this pool
+      # demands: agent.os -equals Windows_NT 
     steps:
     - task: DownloadPipelineArtifact@2
       inputs:
